@@ -1,0 +1,135 @@
+CREATE TABLE Clients (
+	Client_ID varchar(9) NOT NULL,
+	Client_F_Name varchar(25) NOT NULL,
+	Client_M_Name varchar(25),
+	Client_L_Name varchar(25) NOT NULL, 
+	Birth_Date Date,
+	Aborigine char(1) CHECK (Aborigine In ('Y', 'N')),
+	Unit_Number varchar(3),
+	Street_Number varchar(10),
+	Street_Name varchar(3),
+	City varchar(25),
+	Province varchar(25),
+	Country varchar(25),
+	Postal_Code char(6),
+	Phone_Number char(10),
+	PRIMARY KEY (Client_ID)
+);
+
+INSERT INTO Clients
+
+(Client_ID	, Client_F_Name	, Client_M_Name	, Client_L_Name	, Birth_Date	, Aborigine	, Unit_Number	, Street_Number	, Street_Name	, City			, Province	, Country	, Postal_Code	, Phone_Number	)
+VALUES
+(1			,'Richard'		,'M'			,'Nixon'		,'1913-01-09'	,'N'		,'100'			,'600'			,'Pen'			,'Washington'	,'DC'		,'USA'		,NULL			,NULL			),
+(2			,'Dwight'		,'D'			,'Eisenhower'	,'1890-10-14'	,'N'		,'101'			,'600'			,'Pen'			,'Washington'	,'DC'		,'USA'		,NULL			,NULL			),
+(3			,'John'			,'Q'			,'Adams'		,'1767-07-11'	,'N'		,'102'			,'600'			,'Pen'			,'Washington'	,'DC'		,'USA'		,NULL			,NULL			),
+(4			,'Barack'		,'H'			,'Obama'		,'1961-08-04'	,'N'		,'103'			,'600'			,'Pen'			,'Washington'	,'DC'		,'USA'		,'20500'		,'999999999'	),
+(5			,'James'		,'A'			,'Garfield'		,'1931-11-19'	,'N'		,'104'			,'600'			,'Pen'			,'Washington'	,'DC'		,'USA'		,NULL			,NULL			)
+;
+SELECT * FROM Clients;
+
+CREATE TABLE Staff (
+	Staff_ID varchar(9) NOT NULL,
+    Office_ID varchar(9) NOT NULL,
+    Staff_Name varchar(25),
+    Gender char(1) CHECK (Gender In ('M', 'F', 'U', 'O')),
+    Salary_Rate Decimal(6,0) NOT NULL,
+    SIN Char(9) NOT NULL,
+    Birth_Date date,
+    Hiring_Date date NOT NULL,
+    Leave_Date date,
+    Effective_Status Varchar(25),
+    PRIMARY KEY (Staff_ID)
+);
+
+INSERT INTO Staff
+(Staff_ID	, Office_ID	, Staff_Name			, Gender	, Salary_Rate	, SIN		, Birth_Date	, Hiring_Date	, Leave_Date	, Effective_Status	)
+VALUES
+(1			,1			,'John A Macdonald'		,'M'		,100000			,'000000000','1815-01-01'	,'1867-07-01'	,'1891-06-06'	, 'Deceased'		),
+(2			,1			,'Alexander Mackenzie'	,'M'		,100000			,'000000001','1822-01-01'	,'1873-11-07'	,'1878-10-06'	, 'Deceased'		),
+(3			,2			,'Wilfrid Laurier'		,'M'		,100000			,'000000007','1841-01-01'	,'1896-11-07'	,'1911-10-06'	, 'Deceased'		),
+(4			,2			,'Joe Clark'			,'M'		,100000			,'000000016','1939-01-01'	,'1979-06-04'	,'1980-03-2'	, 'Alive'			),
+(5			,3			,'Justin Trudeau'		,'M'		,100000			,'000000023','1971-01-01'	,'2015-11-04'	,NULL			, 'Alive'			)
+;
+
+Select * FROM Staff;
+
+
+CREATE TABLE Advice(
+	Advice_ID varchar(9) NOT NULL,
+    Client_ID varchar(9) NOT NULL,
+    Staff_ID varchar(9) NOT NULL,
+    Advice_Title varchar(25) NOT NULL,
+    Advice_Type varchar(2) NOT NULL CHECK (Advice_Type In ('CR', 'FA', 'CI', 'RE')),
+    Creation_Date date NOT NULL,
+    PRIMARY KEY (Advice_ID)
+);
+
+INSERT INTO Advice
+(Advice_ID	, Client_ID	, Staff_ID	, Advice_Title	, Advice_Type	, Creation_Date	)
+VALUES
+(1			,1			,1			,''				,'CR'			,'2021-01-01'	),
+(2			,2			,1			,''				,'CR'			,'2021-02-02'	),
+(3			,3			,1			,''				,'FA'			,'2021-03-03'	),
+(4			,5			,4			,''				,'FA'			,'2021-04-04'	),
+(5			,5			,5			,''				,'RE'			,'2021-05-05'	)
+;
+
+Select * FROM Advice;
+/************ QUERIES **********************/
+
+/*Find all Advice from Staff who work at Office 1*/
+SELECT *
+FROM Advice A, Staff B WHERE A.Staff_ID = B.Staff_ID AND B.Office_ID = 1;
+
+/*Find all female staff*/
+SELECT * FROM Staff WHERE Gender = 'F';
+
+/*Find all clients born before Canada's Confederation*/
+Select * FROM Clients WHERE Birth_Date < '1867-07-01';
+        
+/************************* VIEWS *************************/
+
+CREATE VIEW Advice_Office AS
+SELECT 	A.Advice_ID,
+		A.Advice_Title,
+        A.Advice_Type
+FROM Advice A, Staff B WHERE A.Staff_ID = B.Staff_ID AND B.Office_ID = 1;
+
+CREATE VIEW FEMALE_STAFF AS
+SELECT Staff_Name FROM Staff WHERE Gender = 'F';
+
+CREATE VIEW PRE_CONFEDORATION_CLIENTS AS
+Select Client_F_Name, Client_M_Name, Client_L_Name, Birth_Date FROM Clients WHERE Birth_Date < '1867-07-01';
+
+/********************************* TRIGGER *******************************/
+/*Increase staff Salary for every Advice client they have*/
+
+CREATE TRIGGER INCREASE_PAY
+AFTER INSERT ON Advice
+FOR EACH ROW
+UPDATE Client
+	SET Salary_Rate = Salary_Rate + 1
+    WHERE Staff_ID = NEW.Staff_ID;
+    
+/************************ FOREIGN KEYS **************************************/
+ALTER TABLE Staff
+ADD CONSTRAINT FK_OFFICE_ID
+	FOREIGN KEY (Office_ID)
+    REFERENCES Area_Office (Office_ID)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE;
+    
+ALTER TABLE Advice
+ADD CONSTRAINT FK_CLIENT_ID
+	FOREIGN KEY (Client_ID)
+    REFERENCES Client (Client_ID)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE;
+    
+ALTER TABLE Advice
+ADD CONSTRAINT FK_STAFF_ID
+	FOREIGN KEY (STAFF_ID)
+    REFERENCES Staff (STAFF_ID)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE;
